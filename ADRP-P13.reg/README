@@ -1,0 +1,3 @@
+
+python reg_go.py --ep 300 --in adrp-p13.csv
+
