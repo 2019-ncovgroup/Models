@@ -17,12 +17,14 @@ from sklearn.model_selection import train_test_split
 #args['dh'] = 'descriptor_headers'
 #args['th'] = 'training_headers'
 #args['out'] = 'out_file'
+#args['model' = 'agg_attn.autosave.model.h5'
 
-psr = argparse.ArgumentParser(description='input agg csv file')
-psr.add_argument('--in',  default='in_file')
-psr.add_argument('--dh',  default='descriptor_headers')
-psr.add_argument('--th',  default='training_headers')
-psr.add_argument('--out', default='out_file')
+psr = argparse.ArgumentParser(description='inferencing on descriptors')
+psr.add_argument('--in',  default='in_file.pkl')
+psr.add_argument('--model',  default='model.h5')
+psr.add_argument('--dh',  default='descriptor_headers.csv')
+psr.add_argument('--th',  default='training_headers.csv')
+psr.add_argument('--out', default='out_file.csv')
 args=vars(psr.parse_args())
 
 print(args)
@@ -95,7 +97,7 @@ def r2(y_true, y_pred):
 
 
 dependencies={'r2' : r2 }
-model = load_model('agg_attn.autosave.model.h5', custom_objects=dependencies)
+model = load_model(args['model'], custom_objects=dependencies)
 model.summary()
 model.compile(loss='mean_squared_error',optimizer=SGD(lr=0.0001, momentum=0.9),metrics=['mae',r2])
 
