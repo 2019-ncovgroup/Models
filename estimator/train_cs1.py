@@ -62,7 +62,7 @@ def main():
 
     train_steps = math.ceil(model_params['train_examples'] / model_params['batch_size'] / 2.) * 2
     epoch_steps = train_steps * model_params['epochs']
-    eval_steps = model_params['val_examples'] // model_params['batch_size']
+    eval_steps = model_params['test_examples'] // model_params['batch_size']
 
     if params["mode"] == "train":
         # CS1 configuration
