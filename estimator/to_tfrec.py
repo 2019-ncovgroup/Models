@@ -43,6 +43,9 @@ def main():
     print('x_train shape:', X_train.shape, 'y_train shape:', Y_train.shape)
     print('x_test shape:', X_test.shape, 'y_test shape:', Y_test.shape)
 
+    if not Path(args.out_dir).is_dir():
+        Path(args.out_dir).mkdir(parents=True)
+
     summary = {}
     summary.update(generate_tfrecords(args, 'train', X_train, Y_train))
     summary.update(generate_tfrecords(args, 'test', X_test, Y_test))

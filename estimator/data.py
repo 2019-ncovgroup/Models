@@ -1,39 +1,9 @@
 import os
 import tensorflow as tf
-import pandas as pd
-
-import numpy as np
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
 
 
 def input_fn(params, partition):
-    df = pd.read_parquet('../data/adrp-p1.parquet')
-    scaler = StandardScaler()
-
-    PL = df.shape[1] - 1
-    df_y = df.iloc[:, 0].astype(np.float32)
-    df_y = pd.DataFrame(data=df_y)
-    df_x = df.iloc[:, 1:(PL + 1)].astype(np.float32)
-    cols = df_x.columns
-    df_x[cols] = scaler.fit_transform(df_x)
-
-    X_train, X_test, Y_train, Y_test = train_test_split(df_x, df_y, test_size=0.20, random_state=42)
-
-    if partition == 'train':
-        dataset = tf.data.Dataset.from_tensor_slices((X_train.values, Y_train.values))
-    else:
-        dataset = tf.data.Dataset.from_tensor_slices((X_test.values, Y_test.values))
-
-    dataset = dataset.batch(batch_size=params['batch_size'], drop_remainder=True)
-    if partition == 'train':
-        dataset = dataset.repeat()
-
-    return dataset
-
-
-def input_fn_tfr(params, partition):
-    drug_input_size = params['input_sizes']
+    [drug_input_size] = params['input_sizes']
     data_dir = params['data_dir']
     file_pattern = os.path.join(data_dir, f'covid.{partition}.*.tfrecords')
     filelist = tf.data.Dataset.list_files(file_pattern)
