@@ -1,4 +1,5 @@
 import argparse
+import os
 from pathlib import Path
 import json
 
@@ -31,7 +32,15 @@ def main():
     args = get_arguments()
     scaler = StandardScaler()
 
-    df = pd.read_parquet(args.data_file)
+    _, ext = os.path.splitext(args.data_file)
+    if ext == '.csv':
+        df = pd.read_csv(args.data_file)
+    elif ext == '.parquet':
+        df = pd.read_parquet(args.data_file)
+    else:
+        print(f'Cannot process {args.data_file}. ext: {ext}')
+        exit()
+
     PL = df.shape[1] - 1
     df_y = df.iloc[:, 0].astype(np.float32)
     df_x = df.iloc[:, 1:(PL + 1)].astype(np.float32)
