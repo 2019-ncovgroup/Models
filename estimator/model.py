@@ -28,6 +28,10 @@ def build_network(features, params):
 
 
 def model_fn(features, labels, mode, params=None):
+    loss = None
+    train_op = None
+    training_hooks = None
+    eval_metric_ops = None
 
     optimizer = params.get('optimizer', DEFAULT_OPTIMIZER)
     if optimizer not in ALLOWED_OPTIMIZERS:
