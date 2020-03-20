@@ -10,19 +10,19 @@ LOSS_SCALE = 1  # No loss scaling by default
 
 def build_network(features, params):
 
-    x = tf.layers.dense(features, 250, activation='relu')
+    x = tf.layers.dense(features, 250, activation=tf.nn.relu)
     x = tf.layers.dropout(x, params.get('dropout_rate', 0.1))
 
-    x = tf.layers.dense(x, 125, activation='relu')
+    x = tf.layers.dense(x, 125, activation=tf.nn.relu)
     x = tf.layers.dropout(x, params.get('dropout_rate', 0.1))
 
-    x = tf.layers.dense(x, 60, activation='relu')
+    x = tf.layers.dense(x, 60, activation=tf.nn.relu,)
     x = tf.layers.dropout(x, params.get('dropout_rate', 0.1))
 
-    x = tf.layers.dense(x, 30, activation='relu')
+    x = tf.layers.dense(x, 30, activation=tf.nn.relu)
     x = tf.layers.dropout(x, params.get('dropout_rate', 0.1))
 
-    predictions = tf.layers.dense(x, 1, activation='relu')
+    predictions = tf.layers.dense(x, 1)
 
     return predictions
 

@@ -53,7 +53,7 @@ def main():
 
 def generate_tfrecords(args, partition, features, labels):
 
-    samples_per_batch = 2 ** 14
+    samples_per_batch = 2 ** 13
     num_examples = len(labels)
     num_shards = (num_examples + samples_per_batch - 1) // samples_per_batch  # ceiling division
 
@@ -66,8 +66,10 @@ def generate_tfrecords(args, partition, features, labels):
 
         with tf.io.TFRecordWriter(tfr_path) as writer:
             for i in range(start_index, end_index):
-                feature_dict = {'score': _float_feature(labels.iloc[i])}
-                feature_dict['drug'] = _float_feature(features.iloc[i].to_list())
+                feature_dict = {
+                    'score': _float_feature(labels.iloc[i]),
+                    'drug': _float_feature(features.iloc[i].to_list())
+                }
 
                 example = tf.train.Example(features=tf.train.Features(feature=feature_dict))
                 writer.write(example.SerializeToString())
