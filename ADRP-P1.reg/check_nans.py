@@ -18,7 +18,7 @@ logging.info("reading pkl into pandas")
 pf=open(infile, 'rb')
 data=pickle.load(pf)
 df=pd.DataFrame(data).transpose()
-df.dropna(how='any', inplace=True)
+# df.dropna(how='any', inplace=True)
 pf.close()
 
 
