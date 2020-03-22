@@ -26,6 +26,8 @@ if __name__ == "__main__":
                         help="Size of the batch of smiles to send to each node for processing. Default=4, should be 10K")
     parser.add_argument("-o", "--outdir", default="outputs",
                         help="Output directory. Default : outputs")
+    parser.add_argument("-m", "--model", required=True,
+                        help="Specify full path to model to run")
     parser.add_argument("-c", "--config", default="local",
                         help="Parsl config defining the target compute resource to use. Default: local")
     args = parser.parse_args()
@@ -75,17 +77,20 @@ if __name__ == "__main__":
             if not pkl_file.endswith('.pkl'):
                 continue
         
-            print("Trying to launch : ", pkl_file)
+            # print("Trying to launch : ", pkl_file)
             fname = os.path.basename(pkl_file)
             csv_file = "{}/{}".format(outdir, 
                                       fname.replace('.pkl', '.csv'))
             log_file = "{}/logs/{}".format(outdir, 
                                            fname.replace('.pkl', '.log'))
 
+            if os.path.exists(csv_file):
+                # Skip compute entirely if output file already exists
+                continue
+
             pkl_file_path = f"{smile_dir}/{pkl_file}"
             x = parsl_runner(pkl_file_path,
-                             '/projects/candle_aesp/yadu/Models/scripts/agg_attn.autosave.model.h5', #3CLpro.reg
-                             #'/projects/candle_aesp/yadu/Models/ADRP-P1.reg/agg_attn.autosave.model.h5',
+                             args.model, #'/projects/candle_aesp/yadu/Models/scripts/agg_attn.autosave.model.h5', #3CLpro.reg                            
                              '/projects/candle_aesp/yadu/Models/ADRP-P1.reg/descriptor_headers',
                              '/projects/candle_aesp/yadu/Models/ADRP-P1.reg/training_headers',
                              csv_file,
