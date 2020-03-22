@@ -8,7 +8,7 @@ from keras.models import Sequential, Model, load_model
 from keras import backend as K
 from keras.optimizers import SGD
 from sklearn.model_selection import train_test_split
-
+import tensorflow as tf
 
 # hard code args for testing
 #args={}
@@ -95,8 +95,21 @@ def r2(y_true, y_pred):
 	SS_tot = K.sum(K.square(y_true - K.mean(y_true)))
 	return (1 - SS_res/(SS_tot + K.epsilon()))
 
+def tf_auc(y_true, y_pred):
+	auc = tf.metrics.auc(y_true, y_pred)[1]
+	K.get_session().run(tf.local_variables_initializer())
+	return auc
 
-dependencies={'r2' : r2 }
+def auroc( y_true, y_pred ) :
+	score = tf.py_func( lambda y_true, y_pred : roc_auc_score( y_true, y_pred, average='macro', sample_weight=None).astype('float32'),
+                        [y_true, y_pred],
+                        'float32',
+                        stateful=False,
+                        name='sklearnAUC' )
+	return score
+
+
+dependencies={'r2' : r2, 'tf_auc' : tf_auc, 'auroc' : auroc }
 model = load_model(args['model'], custom_objects=dependencies)
 model.summary()
 model.compile(loss='mean_squared_error',optimizer=SGD(lr=0.0001, momentum=0.9),metrics=['mae',r2])
