@@ -5,6 +5,7 @@
 import os
 import glob
 import argparse
+import traceback
 from covid_screen.reg_go_infer import reg_go_infer
 import parsl
 import pickle
@@ -44,6 +45,8 @@ if __name__ == "__main__":
         config.executors[0].max_workers = 1
     elif args.config == "theta":
         from theta import config
+    elif args.config == "theta_test":
+        from theta_test import config
     elif args.config == "comet":
         from comet import config
 
@@ -91,8 +94,9 @@ if __name__ == "__main__":
             pkl_file_path = f"{smile_dir}/{pkl_file}"
             x = parsl_runner(pkl_file_path,
                              args.model, #'/projects/candle_aesp/yadu/Models/scripts/agg_attn.autosave.model.h5', #3CLpro.reg                            
-                             '/projects/candle_aesp/yadu/Models/ADRP-P1.reg/descriptor_headers',
-                             '/projects/candle_aesp/yadu/Models/ADRP-P1.reg/training_headers',
+                             # '/projects/candle_aesp/yadu/Models/ADRP-P1.reg/descriptor_headers',
+                             '/projects/candle_aesp/yadu/Models/ADRP-P1.reg/descriptor_headers.csv',
+                             '/projects/candle_aesp/yadu/Models/ADRP-P1.reg/training_headers.csv',
                              csv_file,
                              log_file)
 
@@ -106,7 +110,7 @@ if __name__ == "__main__":
                 x = i.result()
 
             except Exception as e:
-                print(f"Exception : {e}")
+                print("Exception : {} Traceback : {}".format(e, traceback.format_exc()))
                 print(f"Chunk {i} failed")
         print(f"Completed {smile_dir}")    
 

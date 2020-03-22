@@ -38,6 +38,7 @@ def reg_go_infer(pkl_file, model, descriptor_headers, training_headers, out_file
     from keras import backend as K
     from keras.optimizers import SGD
     from sklearn.model_selection import train_test_split
+    import tensorflow as tf
     loadtime = time.time() - start
 
     logger = set_file_logger(log_file_path)
@@ -127,8 +128,21 @@ def reg_go_infer(pkl_file, model, descriptor_headers, training_headers, out_file
         SS_tot = K.sum(K.square(y_true - K.mean(y_true)))
         return (1 - SS_res/(SS_tot + K.epsilon()))
 
+    def tf_auc(y_true, y_pred):
+        auc = tf.metrics.auc(y_true, y_pred)[1]
+        K.get_session().run(tf.local_variables_initializer())
+        return auc
+
+    def auroc( y_true, y_pred ) :
+        score = tf.py_func( lambda y_true, y_pred : roc_auc_score( y_true, y_pred, average='macro', sample_weight=None).astype('float32'),
+                            [y_true, y_pred],
+                            'float32',
+                            stateful=False,
+                            name='sklearnAUC' )
+        return score
+
     logger.info("Loading model")
-    dependencies={'r2' : r2 }
+    dependencies={'r2' : r2, 'tf_auc' : tf_auc, 'auroc' : auroc }
     model = load_model(model, custom_objects=dependencies)
     model.summary()
     model.compile(loss='mean_squared_error',optimizer=SGD(lr=0.0001, momentum=0.9),metrics=['mae',r2])
@@ -152,11 +166,30 @@ def reg_go_infer(pkl_file, model, descriptor_headers, training_headers, out_file
     return out_file
 
 if __name__ == '__main__':
+
+    import os
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-s", "--smile_file", default=".",
+                        help="File path to the smiles csv file")
+    parser.add_argument("-o", "--outdir", default="outputs",
+                        help="Output directory. Default : outputs")
+    parser.add_argument("-m", "--model", required=True,
+                        help="Specify full path to model to run")
+    parser.add_argument("-c", "--config", default="local",
+                        help="Parsl config defining the target compute resource to use. Default: local")
+    args = parser.parse_args()
+
+    x = os.path.basename(args.smile_file)
+    modelname = args.model.split('/')[-2]
+    csv_file = x.replace('.pkl', '.{}.csv'.format(modelname))
+    log_file = x.replace('.pkl', '.{}.log'.format(modelname))
     
-    reg_go_infer('/projects/candle_aesp/Descriptors/Enamine_Real/2019q3-4_Enamine_REAL_01_descriptors/2019q3-4_Enamine_REAL_01.smi.chunk-0-10000.pkl',
-                 '/projects/candle_aesp/yadu/Models/ADRP-P1.reg/agg_attn.autosave.model.h5',
-                 '/projects/candle_aesp/yadu/Models/ADRP-P1.reg/descriptor_headers',
-                 '/projects/candle_aesp/yadu/Models/ADRP-P1.reg/training_headers',
-                 '/projects/candle_aesp/yadu/Models/scripts/out1.csv',
-                 '/projects/candle_aesp/yadu/Models/scripts/out1.log'
+    reg_go_infer(args.smile_file,
+                 args.model,
+                 '/projects/candle_aesp/yadu/Models/ADRP-P1.reg/descriptor_headers.csv',
+                 '/projects/candle_aesp/yadu/Models/ADRP-P1.reg/training_headers.csv',
+                 csv_file,
+                 log_file,
                  )
