@@ -68,8 +68,10 @@ def main():
     epoch_steps = train_steps * model_params['epochs']
     eval_steps = model_params['test_examples'] // model_params['batch_size']
 
+    # sheduled learning rate
     del model_params['learning_rate']
-    model_params['lr_schedule'] = [(0.001, 0), (0.0001, 277000), (0.00001, 554000), (0.000001, 831000), (0.0000001, 1108000)]
+    model_params['lr_schedule'] = [(0.001, 0), (0.0001, train_steps * 50), (0.00001, train_steps * 100),
+                                   (0.000001, train_steps * 150), (0.0000001, train_steps * 200)]
     model_params['xla_compile'] = True
     print("model_params: ", model_params)
 
