@@ -49,6 +49,9 @@ def main():
         summary = json.load(summary_file)
         model_params.update(summary)
 
+    # for gpus, turn on log_metrics
+    model_params['log_metrics'] = True
+
     train_steps = math.ceil(model_params['train_examples'] / model_params['batch_size'] / 2.) * 2
     epoch_steps = train_steps * model_params['epochs']
     eval_steps = model_params['test_examples'] // model_params['batch_size']

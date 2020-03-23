@@ -3,7 +3,7 @@ batch_size: 32
 learning_rate: 0.0001
 dropout_rate: 0.1
 optimizer: 'sgd_momentum'
-log_metrics: True
+log_metrics: False
 epochs: 300
 # only for CS1
 fp16: True

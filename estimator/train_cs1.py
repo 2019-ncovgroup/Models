@@ -77,7 +77,6 @@ def main():
         # CS1 configuration
         use_cs1 = (params["mode"] == "train" and params["cs_ip"] is not None)
         cs_ip = params["cs_ip"] + ":9000" if use_cs1 else None
-        model_params["log_metrics"] = False
 
         slurm_cluster_resolver = CSSlurmClusterResolver(port_base=23111)
         cluster_spec = slurm_cluster_resolver.cluster_spec()
