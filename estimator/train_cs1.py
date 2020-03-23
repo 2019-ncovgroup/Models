@@ -68,9 +68,9 @@ def main():
     epoch_steps = train_steps * model_params['epochs']
     eval_steps = model_params['test_examples'] // model_params['batch_size']
 
-    # del model_params['learning_rate']
-    # model_params['lr_schedule'] = [(0.001, 0), (0.0001, 277000), (0.00001, 554000), (0.000001, 831000)]
-    # model_params['xla_compile'] = True
+    del model_params['learning_rate']
+    model_params['lr_schedule'] = [(0.001, 0), (0.0001, 277000), (0.00001, 554000), (0.000001, 831000), (0.0000001, 1108000)]
+    model_params['xla_compile'] = True
     print("model_params: ", model_params)
 
     if params["mode"] == "train":
@@ -104,6 +104,7 @@ def main():
         estimator.train(input_fn=functools.partial(input_fn, partition='train'), max_steps=epoch_steps)
 
     elif params["mode"] == "eval":
+        model_params['log_metrics'] = True
         estimator = CerebrasEstimator(
             model_fn,
             model_dir=model_params['model_dir'],
