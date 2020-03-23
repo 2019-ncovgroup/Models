@@ -88,11 +88,11 @@ def model_fn(features, labels, mode, params=None):
         elif params.get('xla_compile'):
             # Search for 'xla_compile' in ml_uno.py for more
             # information about this special case.
-            learning_rate = params['learning_rate_schedule'][0][0]
+            learning_rate = params['lr_schedule'][0][0]
         else:
             from cerebras.tf.models.uno.utils import tf_learning_rate
             learning_rate = tf_learning_rate(global_step,
-                                             params['learning_rate_schedule'])
+                                             params['lr_schedule'])
         # Choose the right optimizer
         if optimizer == 'sgd_momentum':
             optimizer = tf.train.MomentumOptimizer(
@@ -200,3 +200,4 @@ def _custom_dtype_getter(getter, name, shape, dtype, *args, **kwargs):
         return tf.cast(var, dtype=dtype, name=name + '_cast')
     else:
         return getter(name, shape, dtype, *args, **kwargs)
+

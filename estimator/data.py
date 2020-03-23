@@ -19,8 +19,6 @@ def input_fn(params, partition):
         features = tf.cast(features, dtype=tf.float16 if params.get("fp16") else tf.float32)
         label = record_features['score']
 
-        print(f'score shape: {label.shape}, drug shape: {features.shape}')
-
         return features, label
 
     dataset = filelist.interleave(lambda x: tf.data.TFRecordDataset(x).map(_parse_record_fn, num_parallel_calls=1),
