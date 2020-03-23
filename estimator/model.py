@@ -22,7 +22,7 @@ def build_network(features, params):
     x = tf.layers.dense(x, 30, activation=tf.nn.relu)
     x = tf.layers.dropout(x, params.get('dropout_rate', 0.1))
 
-    predictions = tf.layers.dense(x, 1, activation=tf.nn.relu)
+    predictions = tf.layers.dense(x, 1)
 
     return predictions
 
