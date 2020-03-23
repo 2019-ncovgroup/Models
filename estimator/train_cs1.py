@@ -6,12 +6,16 @@ import json
 import math
 from pathlib import Path
 
+import tensorflow as tf
+
 from model import model_fn
 from data import input_fn
 
 from cerebras.tf.cs_estimator import CerebrasEstimator
 from cerebras.tf.run_config import CSRunConfig
 from cerebras.tf.cs_slurm_cluster_resolver import CSSlurmClusterResolver
+
+tf.logging.set_verbosity(tf.logging.INFO)
 
 
 def parse_args():
@@ -64,11 +68,15 @@ def main():
     epoch_steps = train_steps * model_params['epochs']
     eval_steps = model_params['test_examples'] // model_params['batch_size']
 
+    # del model_params['learning_rate']
+    # model_params['lr_schedule'] = [(0.001, 0), (0.0001, 277000), (0.00001, 554000), (0.000001, 831000)]
+    # model_params['xla_compile'] = True
+    print("model_params: ", model_params)
+
     if params["mode"] == "train":
         # CS1 configuration
         use_cs1 = (params["mode"] == "train" and params["cs_ip"] is not None)
         cs_ip = params["cs_ip"] + ":9000" if use_cs1 else None
-        model_params["log_metrics"] = False
 
         slurm_cluster_resolver = CSSlurmClusterResolver(port_base=23111)
         cluster_spec = slurm_cluster_resolver.cluster_spec()
@@ -103,7 +111,14 @@ def main():
         )
 
         estimator.evaluate(input_fn=functools.partial(input_fn, partition='test'), steps=eval_steps)
-
+    else:
+        estimator = CerebrasEstimator(
+            model_fn,
+            model_dir=model_params['model_dir'],
+            params=model_params,
+        )
+        estimator.compile(input_fn=functools.partial(input_fn, params=model_params, partition='test'),
+                          validate_only=(params["mode"] == "validate_only"))
 
 if __name__ == '__main__':
     main()
