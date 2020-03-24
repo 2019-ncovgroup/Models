@@ -3,7 +3,10 @@
 
 debug=$1
 config=$2
-for i in $(ls /projects/CVD_Research/BoxMirror/drug-screening/ML-models/)
+
+models=($(cat models_to_run.txt))
+# for i in $(ls /projects/CVD_Research/BoxMirror/drug-screening/ML-models/)
+for i in ${models[@]}
 do 
     echo "STARTING ##########################################################################################"
     modelname=$(basename $i)
