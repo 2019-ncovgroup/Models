@@ -70,8 +70,10 @@ def main():
 
     # sheduled learning rate
     del model_params['learning_rate']
-    model_params['lr_schedule'] = [(0.001, 0), (0.0001, train_steps * 50), (0.00001, train_steps * 100),
-                                   (0.000001, train_steps * 150), (0.0000001, train_steps * 200)]
+    lr_init = 1e-3
+    lr_reduce = 0.75
+    lr_range = range(0, model_params['epochs'], 30)
+    model_params['lr_schedule'] = [(lr_init * (lr_reduce **  i), e) for i, e in enumerate(lr_range)]
     model_params['xla_compile'] = True
     print("model_params: ", model_params)
 
