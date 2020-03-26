@@ -10,6 +10,18 @@ LOSS_SCALE = 1  # No loss scaling by default
 
 def build_network(features, params):
 
+    prev_ = features
+    for i, width in enumerate([512, 256, 128, 64, 256, 128, 64, 32]):
+        x = tf.layers.dense(prev_, width, activation=tf.nn.relu, name=f'lin_{i}')
+        x = tf.layers.dropout(x, params.get('dropout_rate', 0.1), training=params["training"], name=f'dr_{i}')
+
+    predictions = tf.layers.dense(x, 1, name='pred')
+
+    return predictions
+
+
+def build_network_ori(features, params):
+
     x = tf.layers.dense(features, 250, activation=tf.nn.relu)
     x = tf.layers.dropout(x, params.get('dropout_rate', 0.1), training=params["training"])
 
@@ -200,4 +212,3 @@ def _custom_dtype_getter(getter, name, shape, dtype, *args, **kwargs):
         return tf.cast(var, dtype=dtype, name=name + '_cast')
     else:
         return getter(name, shape, dtype, *args, **kwargs)
-
