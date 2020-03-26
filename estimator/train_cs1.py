@@ -73,7 +73,7 @@ def main():
     lr_init = 1e-3
     lr_reduce = 0.75
     lr_range = range(0, model_params['epochs'], 30)
-    model_params['lr_schedule'] = [(lr_init * (lr_reduce **  i), e) for i, e in enumerate(lr_range)]
+    model_params['lr_schedule'] = [(lr_init * (lr_reduce **  i), e * train_steps) for i, e in enumerate(lr_range)]
     model_params['xla_compile'] = True
     print("model_params: ", model_params)
 
