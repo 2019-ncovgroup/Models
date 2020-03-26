@@ -14,6 +14,7 @@ def build_network(features, params):
     for i, width in enumerate([512, 256, 128, 64, 256, 128, 64, 32]):
         x = tf.layers.dense(prev_, width, activation=tf.nn.relu, name=f'lin_{i}')
         x = tf.layers.dropout(x, params.get('dropout_rate', 0.1), training=params["training"], name=f'dr_{i}')
+        prev_ = x
 
     predictions = tf.layers.dense(x, 1, name='pred')
 
