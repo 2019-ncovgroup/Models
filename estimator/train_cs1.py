@@ -70,7 +70,7 @@ def main():
 
     # sheduled learning rate
     del model_params['learning_rate']
-    lr_init = 1e-3
+    lr_init = 1e-3 * 4
     lr_reduce = 0.75
     lr_range = range(0, model_params['epochs'], 30)
     model_params['lr_schedule'] = [(lr_init * (lr_reduce ** i), e * train_steps) for i, e in enumerate(lr_range)]
@@ -78,7 +78,7 @@ def main():
     print("model_params: ", model_params)
 
     # Loss scaling for CS1
-    os.environ["CEREBRAS_MIXED_PRECISION_LOSS_SCALE"] = "16.0"
+    # os.environ["CEREBRAS_MIXED_PRECISION_LOSS_SCALE"] = "16.0"
 
     if params["mode"] == "train":
         # CS1 configuration
