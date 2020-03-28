@@ -13,16 +13,17 @@ import gc
 import signal
 
 # hard code args for testing
-args={}
-args['1']='/lambda_stor/homes/brettin/covid19/ML-models/3CLpro.reg.top1.csv'
-args['2']='/lambda_stor/homes/brettin/covid19/ML-models/Enamine_Infer_3CLpro.bin.top1.csv'
-args['out'] =  'intersection.top1'
+# args={}
+# args['1']='/lambda_stor/homes/brettin/covid19/ML-models/3CLpro.reg.top1.csv'
+# args['2']='/lambda_stor/homes/brettin/covid19/ML-models/Enamine_Infer_3CLpro.bin.top1.csv'
+# args['out'] =  'intersection.top1'
 
-#import argparse
-#psr = argparse.ArgumentParser(description='inferencing on descriptors')
-#psr.add_argument('--in',  default='in_dir')
-#psr.add_argument('--out', default='top1.csv')
-#args=vars(psr.parse_args())
+import argparse
+psr = argparse.ArgumentParser(description='inferencing on descriptors')
+psr.add_argument('--1',  default='file1')
+psr.add_argument('--2',  default='file2')
+psr.add_argument('--out', default='intersection.csv')
+args=vars(psr.parse_args())
 print(args)
 logging.info("processing {} and {}".format(args['1'], args['2']))
 
