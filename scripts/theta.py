@@ -26,7 +26,7 @@ config = Config(
     executors=[
         HighThroughputExecutor(
             label='theta_local_htex_multinode',
-            max_workers=64, # The target process itself if a Multiprocessing application. We do not
+            max_workers=32, # The target process itself if a Multiprocessing application. We do not
             # need to overload the compute node with parsl workers.
             address="10.236.1.195",
             # address=address_by_hostname(),
@@ -39,7 +39,7 @@ config = Config(
                 #account='candle_aesp',
                 account='CVD_Research',
                 launcher=AprunLauncher(overrides=" -d 64"),
-                walltime='02:00:00',
+                walltime='10:00:00',
                 nodes_per_block=100,
                 init_blocks=1,
                 min_blocks=1,

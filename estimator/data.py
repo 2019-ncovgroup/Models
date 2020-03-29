@@ -23,7 +23,9 @@ def input_fn(params, partition):
 
     dataset = filelist.interleave(lambda x: tf.data.TFRecordDataset(x).map(_parse_record_fn, num_parallel_calls=1),
                                   cycle_length=4, block_length=16, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+    # batch -> prefetch -> repeat
     dataset = dataset.batch(batch_size=params['batch_size'], drop_remainder=True)
+    dataset = dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
 
     if partition == 'train':
         dataset = dataset.repeat()
