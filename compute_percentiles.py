@@ -22,8 +22,11 @@ import argparse
 psr = argparse.ArgumentParser(description='inferencing on descriptors')
 psr.add_argument('--in',  default='in_dir')
 psr.add_argument('--out', default='top1.csv')
+psr.add_argument('--perc', default=1, type=int)
+
 args=vars(psr.parse_args())
 print(args)
+
 logging.info('processing '+ args['in'])
 
 
@@ -54,15 +57,18 @@ df=df.compute()
 logging.info("{:,} rows with {:,} elements".format(df.shape[0], df.shape[1]))
 
 
-logging.info("computing percentiles on pandas dataframe")
-d=df.describe(percentiles=[.99])
+p=1-(args['perc']/100)
+r=str(100-args['perc']) + '%'
+logging.info("computing percentiles on pandas dataframe using {}".format(p))
+d=df.describe(percentiles=[p])
 logging.info("computed percentiles on pandas dataframe")
-logging.info("cutoff score for top 1% {:,}".format(d.at["99%",1]))
+logging.info("cutoff score for top {}% {:,}".format(args['perc'], d.at[r,1]))
 
 
-logging.info("identifying top 1%")
-t = df[df[1] > d.at["99%",1]]
-logging.info("identified {:,} compounds in the top 1%".format(t.shape[0]))
+logging.info("identifying top {}%".format(args['perc']))
+r=str(100-args['perc']) + '%'
+t = df[df[1] > d.at[r,1]]
+logging.info("identified {:,} compounds in the top {}%".format(t.shape[0], args['perc']))
 
 
 logging.info ('writing csv')
