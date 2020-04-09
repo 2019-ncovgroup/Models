@@ -8,6 +8,7 @@ import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
+import ray
 
 
 def get_arguments():
@@ -55,6 +56,8 @@ def main():
     if not Path(args.out_dir).is_dir():
         Path(args.out_dir).mkdir(parents=True)
 
+    ray.init()
+
     summary = {}
     summary.update(generate_tfrecords(args, 'train', X_train, Y_train))
     summary.update(generate_tfrecords(args, 'test', X_test, Y_test))
@@ -71,22 +74,32 @@ def generate_tfrecords(args, partition, features, labels):
 
     stat = {f'{partition}_examples': num_examples}
 
-    for shard in range(num_shards):
-        start_index = samples_per_batch * shard
-        end_index = min(samples_per_batch + start_index, num_examples)
-        tfr_path = str(Path(args.out_dir, f'covid.{partition}.{shard:02}.tfrecords'))
+    futures = [write_tfr.remote(
+        shard=i, args=args, partition=partition,
+        features=features, labels=labels, samples_per_batch=samples_per_batch,
+        num_examples=num_examples) for i in range(num_shards)]
+    ray.get(futures)
 
-        with tf.io.TFRecordWriter(tfr_path) as writer:
-            for i in range(start_index, end_index):
-                feature_dict = {
-                    'score': _float_feature(labels.iloc[i]),
-                    'drug': _float_feature(features.iloc[i].to_list())
-                }
-
-                example = tf.train.Example(features=tf.train.Features(feature=feature_dict))
-                writer.write(example.SerializeToString())
-        print(f'saved {tfr_path}')
     return stat
+
+
+@ray.remote
+def write_tfr(shard, args, partition, features, labels, samples_per_batch, num_examples):
+    print(f'partition: {partition}, shard: {shard}, {samples_per_batch}, {num_examples}')
+    start_index = samples_per_batch * shard
+    end_index = min(samples_per_batch + start_index, num_examples)
+    tfr_path = str(Path(args.out_dir, f'covid.{partition}.{shard:02}.tfrecords'))
+
+    with tf.io.TFRecordWriter(tfr_path) as writer:
+        for i in range(start_index, end_index):
+            feature_dict = {
+                'score': _float_feature(labels.iloc[i]),
+                'drug': _float_feature(features.iloc[i].to_list())
+            }
+
+            example = tf.train.Example(features=tf.train.Features(feature=feature_dict))
+            writer.write(example.SerializeToString())
+    print(f'saved {tfr_path}')
 
 
 def _float_feature(value):
