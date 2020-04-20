@@ -6,7 +6,7 @@ import os
 import glob
 import argparse
 import traceback
-from covid_screen.reg_go_infer import reg_go_infer
+from covid_screen.reg_go_infer import reg_go_infer, reg_go_infer_csv
 import parsl
 import pickle
 
@@ -29,6 +29,8 @@ if __name__ == "__main__":
                         help="Output directory. Default : outputs")
     parser.add_argument("-m", "--model", required=True,
                         help="Specify full path to model to run")
+    parser.add_argument("--selector", default="pkl",
+                        help="Specify file extension to use for input files")
     parser.add_argument("-c", "--config", default="local",
                         help="Parsl config defining the target compute resource to use. Default: local")
     args = parser.parse_args()
@@ -45,6 +47,7 @@ if __name__ == "__main__":
         config.executors[0].max_workers = 1
     elif args.config == "theta":
         from theta import config
+        print("Loading theta config")
     elif args.config == "theta_test":
         from theta_test import config
     elif args.config == "comet":
@@ -55,7 +58,9 @@ if __name__ == "__main__":
     # config.retries = 2
     parsl.load(config)
 
-    parsl_runner = parsl.python_app(reg_go_infer)
+    parsl_runner = {}
+    parsl_runner['pkl'] = parsl.python_app(reg_go_infer)
+    parsl_runner['csv'] = parsl.python_app(reg_go_infer_csv)
 
     if args.debug:
         parsl.set_stream_logger()
@@ -65,8 +70,8 @@ if __name__ == "__main__":
 
     all_smile_dirs = glob.glob(args.smile_dir)
     counter = 0
-    batch_futures = {}
 
+    batch_futures = {}
     for smile_dir in all_smile_dirs:
         print("Processing smile_dir: {} {}/{}".format(smile_dir, counter, len(all_smile_dirs)))
         counter+=1
@@ -76,29 +81,36 @@ if __name__ == "__main__":
         os.makedirs(outdir, exist_ok=True)
         os.makedirs(outdir + '/logs' , exist_ok=True)
 
-        for pkl_file in os.listdir(smile_dir)[:int(args.num_files)]:
-            if not pkl_file.endswith('.pkl'):
+        for input_file in os.listdir(smile_dir)[:int(args.num_files)]:
+            fname = os.path.basename(input_file)
+            if input_file.endswith('.pkl') and args.selector == "pkl":
+                out_file = "{}/{}".format(outdir, 
+                                          fname.replace('.pkl', '.csv'))
+                log_file = "{}/logs/{}".format(outdir, 
+                                               fname.replace('.pkl', '.log'))
+                kind = 'pkl'
+                
+            elif input_file.endswith('csv') and args.selector == "csv":
+                out_file = "{}/{}".format(outdir, 
+                                          fname.replace('.csv', '.out.csv'))
+                log_file = "{}/logs/{}".format(outdir, 
+                                               fname.replace('.csv', '.log'))                
+                kind = 'csv'
+            else:                
                 continue
         
-            # print("Trying to launch : ", pkl_file)
-            fname = os.path.basename(pkl_file)
-            csv_file = "{}/{}".format(outdir, 
-                                      fname.replace('.pkl', '.csv'))
-            log_file = "{}/logs/{}".format(outdir, 
-                                           fname.replace('.pkl', '.log'))
-
-            if os.path.exists(csv_file):
+            if os.path.exists(out_file):
                 # Skip compute entirely if output file already exists
                 continue
 
-            pkl_file_path = f"{smile_dir}/{pkl_file}"
-            x = parsl_runner(pkl_file_path,
-                             args.model, #'/projects/candle_aesp/yadu/Models/scripts/agg_attn.autosave.model.h5', #3CLpro.reg                            
-                             # '/projects/candle_aesp/yadu/Models/ADRP-P1.reg/descriptor_headers',
-                             '/projects/candle_aesp/yadu/Models/ADRP-P1.reg/descriptor_headers.csv',
-                             '/projects/candle_aesp/yadu/Models/ADRP-P1.reg/training_headers.csv',
-                             csv_file,
-                             log_file)
+            input_file_path = f"{smile_dir}/{input_file}"
+            x = parsl_runner[kind](input_file_path,
+                                   args.model, #'/projects/candle_aesp/yadu/Models/scripts/agg_attn.autosave.model.h5', #3CLpro.reg                            
+                                   # '/projects/candle_aesp/yadu/Models/ADRP-P1.reg/descriptor_headers',
+                                   '/projects/candle_aesp/yadu/Models/ADRP-P1.reg/descriptor_headers.csv',
+                                   '/projects/candle_aesp/yadu/Models/ADRP-P1.reg/training_headers.csv',
+                                   out_file,
+                                   log_file)
 
             batch_futures[smile_dir].append(x)
 
