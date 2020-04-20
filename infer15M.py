@@ -66,5 +66,5 @@ assert(len(predictions) == rows)
 
 with open (args['out'], "w") as f:
 	for n in range(rows):
-		print ( "{},{},{}".format(df.iloc[n,0][0],predictions[n][0],df.index[n] ), file=f)
+		print ( "{},{}".format(df.iloc[n,0],predictions[n][0]), file=f)
 

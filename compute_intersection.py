@@ -24,7 +24,7 @@ psr.add_argument('--1',  default='file1')
 psr.add_argument('--2',  default='file2')
 psr.add_argument('--out', default='intersection.csv')
 args=vars(psr.parse_args())
-print(args)
+logging.info(str((args)))
 logging.info("processing {} and {}".format(args['1'], args['2']))
 
 
