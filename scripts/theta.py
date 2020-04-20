@@ -40,7 +40,7 @@ config = Config(
                 account='CVD_Research',
                 launcher=AprunLauncher(overrides=" -d 64"),
                 walltime='10:00:00',
-                nodes_per_block=100,
+                nodes_per_block=80,
                 init_blocks=1,
                 min_blocks=1,
                 max_blocks=1,
