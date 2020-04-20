@@ -24,6 +24,78 @@ def set_file_logger(filename: str, name: str = 'candle', level: int = logging.DE
     logger.addHandler(handler)
     return logger
 
+
+def reg_go_infer_csv(csv_input_file, model, descriptor_headers, training_headers, out_file, log_file_path):
+    import time
+    start = time.time()
+    import pickle
+    import numpy as np
+    import pandas as pd
+    import csv
+    import argparse
+    import os
+
+    from keras.models import Sequential, Model, load_model
+    from keras import backend as K
+    from keras.optimizers import SGD
+    from sklearn.model_selection import train_test_split
+    from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
+    import tensorflow as tf
+
+    delta = time.time() - start
+    logger = set_file_logger(log_file_path)
+    logger.info("Start================================================== on {}".format(os.uname()))
+    logger.info("Completed loading import in {}s".format(delta))
+
+    df=pd.read_csv(csv_input_file)
+    cols=df.shape[1] - 1
+    rows=df.shape[0]
+    samples=np.empty([rows,cols],dtype='float32')
+    samples=df.iloc[:,1:]
+    samples=np.nan_to_num(samples)
+
+    scaler = StandardScaler()
+    df_x = scaler.fit_transform(samples)
+
+    # a custom metric was used during training
+    def r2(y_true, y_pred):
+        SS_res =  K.sum(K.square(y_true - y_pred))
+        SS_tot = K.sum(K.square(y_true - K.mean(y_true)))
+        return (1 - SS_res/(SS_tot + K.epsilon()))
+
+    def tf_auc(y_true, y_pred):
+        auc = tf.metrics.auc(y_true, y_pred)[1]
+        K.get_session().run(tf.local_variables_initializer())
+        return auc
+
+    def auroc( y_true, y_pred ) :
+        score = tf.py_func( lambda y_true, y_pred : roc_auc_score( y_true, y_pred, average='macro', sample_weight=None).astype('float32'),
+                            [y_true, y_pred],
+                            'float32',
+                            stateful=False,
+                            name='sklearnAUC' )
+        return score
+
+
+    dependencies={'r2' : r2, 'tf_auc' : tf_auc, 'auroc' : auroc }
+    model = load_model(model, custom_objects=dependencies)
+    model.summary()
+    model.compile(loss='mean_squared_error',optimizer=SGD(lr=0.0001, momentum=0.9),metrics=['mae',r2])
+
+    predictions=model.predict(df_x)
+    assert(len(predictions) == rows)
+
+    with open (out_file, "w") as f:
+        for n in range(rows):
+            # print ( "{},{},{}".format(df.iloc[n,0][0],predictions[n][0],df.index[n] ), file=f)
+            # print ( "{},{}".format(df.iloc[n,0],predictions[n][0]), file=f)
+            if len(df.iloc[1,0]) == 0:
+                # IDENTIFIER_LIST is empty, use smile
+                print ( "{},{},{}".format(df.index[n],predictions[n][0],df.index[n] ), file=f)
+            else:
+                print ( "{},{},{}".format(df.iloc[n,0][0],predictions[n][0],df.index[n] ), file=f)
+
+
 def reg_go_infer(pkl_file, model, descriptor_headers, training_headers, out_file, log_file_path):
     import time
     start = time.time()
@@ -73,7 +145,7 @@ def reg_go_infer(pkl_file, model, descriptor_headers, training_headers, out_file
     tdict={}
     for i in range(len(drow)):
         tdict[drow[i]]=i
- 
+
 
     f.close()
     del reader
@@ -155,7 +227,13 @@ def reg_go_infer(pkl_file, model, descriptor_headers, training_headers, out_file
     tmp_file = "/tmp/{}".format(os.path.basename(out_file))
     with open (tmp_file, "w") as f:
         for n in range(rows):
-            print ("{},{},{}".format(df.iloc[n,0][0],predictions[n][0],df.index[n] ), file=f)
+            # print ("{},{},{}".format(df.iloc[n,0][0],predictions[n][0],df.index[n] ), file=f)
+            if len(df.iloc[1,0]) == 0:
+                # IDENTIFIER_LIST is empty, use smile                                                                                                                                                                           
+                print ( "{},{},{}".format(df.index[n],predictions[n][0],df.index[n] ), file=f)
+            else:
+                print ( "{},{},{}".format(df.iloc[n,0][0],predictions[n][0],df.index[n] ), file=f)
+
     os.system(f'cp {tmp_file} {out_file}')
 
     logger.info("All done")
@@ -183,13 +261,25 @@ if __name__ == '__main__':
 
     x = os.path.basename(args.smile_file)
     modelname = args.model.split('/')[-2]
-    csv_file = x.replace('.pkl', '.{}.csv'.format(modelname))
-    log_file = x.replace('.pkl', '.{}.log'.format(modelname))
-    
-    reg_go_infer(args.smile_file,
-                 args.model,
-                 '/projects/candle_aesp/yadu/Models/ADRP-P1.reg/descriptor_headers.csv',
-                 '/projects/candle_aesp/yadu/Models/ADRP-P1.reg/training_headers.csv',
-                 csv_file,
-                 log_file,
-                 )
+    if x.endswith('.pkl'):
+        out_file = x.replace('.pkl', '.{}.csv'.format(modelname))
+        log_file = x.replace('.pkl', '.{}.log'.format(modelname))
+        reg_go_infer(args.smile_file,
+                     args.model,
+                     '/projects/candle_aesp/yadu/Models/ADRP-P1.reg/descriptor_headers.csv',
+                     '/projects/candle_aesp/yadu/Models/ADRP-P1.reg/training_headers.csv',
+                     out_file,
+                     log_file)
+
+    elif x.endswith('.csv'):
+        out_file = x.replace('.csv', '.{}.out.csv'.format(modelname))
+        log_file = x.replace('.csv', '.{}.log'.format(modelname))
+        reg_go_infer_csv(args.smile_file,
+                     args.model,
+                     '/projects/candle_aesp/yadu/Models/ADRP-P1.reg/descriptor_headers.csv',
+                     '/projects/candle_aesp/yadu/Models/ADRP-P1.reg/training_headers.csv',
+                     out_file,
+                     log_file)
+
+    else:
+        print("Bad input file")
