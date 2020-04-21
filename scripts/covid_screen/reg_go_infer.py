@@ -160,7 +160,6 @@ def reg_go_infer(pkl_file, model, descriptor_headers, training_headers, out_file
 
 
     # read the pickle descriptor file
-
     pf=open(pkl_file, 'rb')
     data=pickle.load(pf)
     df=pd.DataFrame(data).transpose()
@@ -265,17 +264,17 @@ if __name__ == '__main__':
     modelname = args.model.split('/')[-2]
     start = time.time()
     for smile_file in glob.glob(args.smile_glob):
-        x = os.path.basename(smile_file)
+        x = os.path.basename(smile_file)        
         print(smile_file)
         if x.endswith('.pkl'):
-            out_file = x.replace('.pkl', '.{}.csv'.format(modelname))
+            out_file = x.replace('.pkl', '.{}.csv'.format(modelname))            
             log_file = x.replace('.pkl', '.{}.log'.format(modelname))
             reg_go_infer(smile_file,
                          args.model,
-                         '/projects/candle_aesp/yadu/Models/ADRP-P1.reg/descriptor_headers.csv',
-                         '/projects/candle_aesp/yadu/Models/ADRP-P1.reg/training_headers.csv',
-                         out_file,
-                         log_file)
+                         '/ccs/home/yadunan/Models/ADRP-P1.reg/descriptor_headers.csv',
+                         '/ccs/home/yadunan/Models/ADRP-P1.reg/training_headers.csv',
+                         "{}/{}".format(args.outdir, out_file),
+                         "{}/{}".format(args.outdir, log_file))
 
         elif x.endswith('.csv'):
             out_file = x.replace('.csv', '.{}.out.csv'.format(modelname))
@@ -284,8 +283,8 @@ if __name__ == '__main__':
                              args.model,
                              '/projects/candle_aesp/yadu/Models/ADRP-P1.reg/descriptor_headers.csv',
                              '/projects/candle_aesp/yadu/Models/ADRP-P1.reg/training_headers.csv',
-                             out_file,
-                             log_file)
+                             "{}/{}".format(args.outdir, out_file),
+                             "{}/{}".format(args.outdir, log_file))
         else:
             print("Bad input file")
 
