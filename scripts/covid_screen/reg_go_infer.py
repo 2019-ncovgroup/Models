@@ -246,11 +246,13 @@ def reg_go_infer(pkl_file, model, descriptor_headers, training_headers, out_file
 if __name__ == '__main__':
 
     import os
+    import glob
+    import time
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("-s", "--smile_file", default=".",
-                        help="File path to the smiles csv file")
+    parser.add_argument("-s", "--smile_glob", default=".",
+                        help="Glob pattern as path to the smiles csv file")
     parser.add_argument("-o", "--outdir", default="outputs",
                         help="Output directory. Default : outputs")
     parser.add_argument("-m", "--model", required=True,
@@ -259,27 +261,40 @@ if __name__ == '__main__':
                         help="Parsl config defining the target compute resource to use. Default: local")
     args = parser.parse_args()
 
-    x = os.path.basename(args.smile_file)
+
     modelname = args.model.split('/')[-2]
-    if x.endswith('.pkl'):
-        out_file = x.replace('.pkl', '.{}.csv'.format(modelname))
-        log_file = x.replace('.pkl', '.{}.log'.format(modelname))
-        reg_go_infer(args.smile_file,
-                     args.model,
-                     '/projects/candle_aesp/yadu/Models/ADRP-P1.reg/descriptor_headers.csv',
-                     '/projects/candle_aesp/yadu/Models/ADRP-P1.reg/training_headers.csv',
-                     out_file,
-                     log_file)
+    start = time.time()
+    for smile_file in glob.glob(args.smile_glob):
+        x = os.path.basename(smile_file)
+        print(smile_file)
+        if x.endswith('.pkl'):
+            out_file = x.replace('.pkl', '.{}.csv'.format(modelname))
+            log_file = x.replace('.pkl', '.{}.log'.format(modelname))
+            reg_go_infer(smile_file,
+                         args.model,
+                         '/projects/candle_aesp/yadu/Models/ADRP-P1.reg/descriptor_headers.csv',
+                         '/projects/candle_aesp/yadu/Models/ADRP-P1.reg/training_headers.csv',
+                         out_file,
+                         log_file)
 
-    elif x.endswith('.csv'):
-        out_file = x.replace('.csv', '.{}.out.csv'.format(modelname))
-        log_file = x.replace('.csv', '.{}.log'.format(modelname))
-        reg_go_infer_csv(args.smile_file,
-                     args.model,
-                     '/projects/candle_aesp/yadu/Models/ADRP-P1.reg/descriptor_headers.csv',
-                     '/projects/candle_aesp/yadu/Models/ADRP-P1.reg/training_headers.csv',
-                     out_file,
-                     log_file)
+        elif x.endswith('.csv'):
+            out_file = x.replace('.csv', '.{}.out.csv'.format(modelname))
+            log_file = x.replace('.csv', '.{}.log'.format(modelname))
+            reg_go_infer_csv(smile_file,
+                             args.model,
+                             '/projects/candle_aesp/yadu/Models/ADRP-P1.reg/descriptor_headers.csv',
+                             '/projects/candle_aesp/yadu/Models/ADRP-P1.reg/training_headers.csv',
+                             out_file,
+                             log_file)
+        else:
+            print("Bad input file")
 
-    else:
-        print("Bad input file")
+        delta = time.time() - start
+        print("Smile_file completed in {:8.3f} s with throughput of {:8.3f} Smiles/s".format(delta, 10000/delta))
+
+    delta = time.time() - start
+    chunk_count = len(glob.glob(args.smile_glob))
+    print("{} Smile_file completed in {:8.3f} s with throughput of {:8.3f} Smiles/s".format(chunk_count,
+                                                                                            delta, 
+                                                                                            (chunk_count*10000)/delta))
+
