@@ -52,6 +52,8 @@ if __name__ == "__main__":
         from theta_test import config
     elif args.config == "comet":
         from comet import config
+    elif args.config == "summit":
+        from summit import config
 
     # Most of the app that hit the timeout will complete if retried.
     # but for this demo, I'm not setting retries.
@@ -107,8 +109,8 @@ if __name__ == "__main__":
             x = parsl_runner[kind](input_file_path,
                                    args.model, #'/projects/candle_aesp/yadu/Models/scripts/agg_attn.autosave.model.h5', #3CLpro.reg                            
                                    # '/projects/candle_aesp/yadu/Models/ADRP-P1.reg/descriptor_headers',
-                                   '/projects/candle_aesp/yadu/Models/ADRP-P1.reg/descriptor_headers.csv',
-                                   '/projects/candle_aesp/yadu/Models/ADRP-P1.reg/training_headers.csv',
+                                   '/gpfs/alpine/proj-shared/med110/yadu/Models/ADRP-P1.reg/descriptor_headers.csv',
+                                   '/gpfs/alpine/proj-shared/med110/yadu/Models/ADRP-P1.reg/training_headers.csv',
                                    out_file,
                                    log_file)
 

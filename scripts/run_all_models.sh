@@ -1,5 +1,5 @@
 #!/bin/bash
-set -x
+#set -x
 
 debug=$1
 config=$2
@@ -38,8 +38,8 @@ run() {
 		-o $PWD/$output_prefix/$output_prefix_$modelname \
 		-m ${modelpath[0]} \
 		-n 10000  \
-		-c theta
-	    mail -s "[Theta] $modelname on $output_prefix completed with $status" yadudoc1729@gmail.com < /dev/null
+		-c summit
+	    mail -s "[Summit] $modelname on $output_prefix completed with $status" yadudoc1729@gmail.com < /dev/null
 	fi
 	status=$?
 	echo "Completed -------------------------- $(date)"
@@ -48,13 +48,12 @@ run() {
 	echo "COMPLETED ##########################################################################################"
     done
 
-    mail -s "[Theta] All inference completed for $output_prefix" yadudoc1729@gmail.com < /dev/null
+    mail -s "[Summit] All inference completed for $output_prefix" yadudoc1729@gmail.com < /dev/null
 }
 
 
 #run '/projects/CVD_Research/datasets/Zinc15_descriptors/*' "Z15_Infer"
-run '/projects/CVD_Research/datasets/descriptors-all/savi_descriptors/*' "SAV_Infer"
-run '/projects/CVD_Research/datasets/descriptors-all/pubchem128_descriptors/*' "PCH_Infer"
-run '/projects/CVD_Research/datasets/descriptors-all/GDB-17_descriptors/*' "G17_Infer"
+#run '/gpfs/alpine/med110/scratch/yadunan/descriptors/SAV/*' "SAV_Infer"
+run '/gpfs/alpine/med110/scratch/yadunan/descriptors/ZIN/ZIN_00' "ZIN_Infer"
 
 

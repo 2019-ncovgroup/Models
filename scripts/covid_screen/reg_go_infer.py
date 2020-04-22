@@ -173,7 +173,9 @@ def reg_go_infer(pkl_file, model, descriptor_headers, training_headers, out_file
     samples=np.empty([rows,cols],dtype='float32')
 
     for i in range(rows):
-        a=df.iloc[i,1]
+        a=df.iloc[i,1]        
+        #print("A[1]= ", df.iloc[i,1], " A[0] = ", df.iloc[i,0])
+        #return
         samples[i]=a
 
     samples=np.nan_to_num(samples)
@@ -264,6 +266,7 @@ if __name__ == '__main__':
     modelname = args.model.split('/')[-2]
     start = time.time()
     for smile_file in glob.glob(args.smile_glob):
+        t_start = time.time()
         x = os.path.basename(smile_file)        
         print(smile_file)
         if x.endswith('.pkl'):
@@ -271,8 +274,8 @@ if __name__ == '__main__':
             log_file = x.replace('.pkl', '.{}.log'.format(modelname))
             reg_go_infer(smile_file,
                          args.model,
-                         '/ccs/home/yadunan/Models/ADRP-P1.reg/descriptor_headers.csv',
-                         '/ccs/home/yadunan/Models/ADRP-P1.reg/training_headers.csv',
+                         '/gpfs/alpine/proj-shared/med110/yadu/Models/ADRP-P1.reg/descriptor_headers.csv',
+                         '/gpfs/alpine/proj-shared/med110/yadu/Models/ADRP-P1.reg/training_headers.csv',
                          "{}/{}".format(args.outdir, out_file),
                          "{}/{}".format(args.outdir, log_file))
 
@@ -288,7 +291,7 @@ if __name__ == '__main__':
         else:
             print("Bad input file")
 
-        delta = time.time() - start
+        delta = time.time() - t_start
         print("Smile_file completed in {:8.3f} s with throughput of {:8.3f} Smiles/s".format(delta, 10000/delta))
 
     delta = time.time() - start
