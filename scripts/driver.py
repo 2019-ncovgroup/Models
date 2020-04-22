@@ -124,7 +124,7 @@ if __name__ == "__main__":
             # Waiting for all futures
             print("Waiting for all futures from {}".format(smile_dir))
 
-        for i in batch_futures[]:
+        for i in batch_futures:
             try:
                 x = i.result()
 
