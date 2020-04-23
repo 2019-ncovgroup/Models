@@ -16,18 +16,18 @@ run() {
 
     elif [[ "$debug" == "debug" ]]
     then
-	python3 test.py -s "$data_source" \
+	python3 driver.py -s "$data_source" \
 	    -o $PWD/$output_prefix/$output_prefix \
 	    -m models_to_run.txt \
 	    -n 10  \
 	    -c $config
     elif [[ "$debug" == "prod" ]]
     then
-	python3 test.py -s "$data_source" \
-	    -o $PWD/$output_prefix/$output_prefix_$modelname \
-	    -m ${modelpath[0]} \
+	python3 driver.py -s "$data_source" \
+	    -o $PWD/$output_prefix/$output_prefix \
+	    -m models_to_run.txt \
 	    -n 10000  \
-	    -c theta
+	    -c summit
 	mail -s "[Summit] $modelname on $output_prefix completed with $status" yadudoc1729@gmail.com < /dev/null
     fi
     status=$?
@@ -42,7 +42,7 @@ run() {
 
 #run '/projects/CVD_Research/datasets/Zinc15_descriptors/*' "Z15_Infer"
 #run '/gpfs/alpine/med110/scratch/yadunan/descriptors/SAV/*' "SAV_Infer"
-run '/gpfs/alpine/med110/scratch/yadunan/descriptors/ZIN/ZIN_00' "ZIN_Infer"
+run '/gpfs/alpine/med110/scratch/yadunan/descriptors/ZIN/ZIN*' "ZIN_Infer"
 
 
 

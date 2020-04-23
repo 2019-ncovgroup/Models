@@ -52,6 +52,8 @@ if __name__ == "__main__":
         from theta_test import config
     elif args.config == "comet":
         from comet import config
+    elif args.config == "summit":
+        from summit import config
 
     models_list = []
     with open(args.model_file) as f:
@@ -113,9 +115,9 @@ if __name__ == "__main__":
 
                 input_file_path = f"{smile_dir}/{input_file}"
                 x = parsl_runner[kind](input_file_path,
-                                       model_path,
-                                       '/projects/candle_aesp/yadu/Models/ADRP-P1.reg/descriptor_headers.csv',
-                                       '/projects/candle_aesp/yadu/Models/ADRP-P1.reg/training_headers.csv',
+                                       model_path,                                    
+                                       '/gpfs/alpine/proj-shared/med110/yadu/Models/ADRP-P1.reg/descriptor_headers.csv',
+                                       '/gpfs/alpine/proj-shared/med110/yadu/Models/ADRP-P1.reg/training_headers.csv',
                                        out_file,
                                        log_file)
 

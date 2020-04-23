@@ -34,6 +34,7 @@ def reg_go_infer_csv(csv_input_file, model, descriptor_headers, training_headers
     import csv
     import argparse
     import os
+    import shutil
 
     from keras.models import Sequential, Model, load_model
     from keras import backend as K
@@ -43,6 +44,7 @@ def reg_go_infer_csv(csv_input_file, model, descriptor_headers, training_headers
     import tensorflow as tf
 
     delta = time.time() - start
+    start = time.time()
     logger = set_file_logger(log_file_path)
     logger.info("Start================================================== on {}".format(os.uname()))
     logger.info("Completed loading import in {}s".format(delta))
@@ -85,7 +87,12 @@ def reg_go_infer_csv(csv_input_file, model, descriptor_headers, training_headers
     predictions=model.predict(df_x)
     assert(len(predictions) == rows)
 
-    with open (out_file, "w") as f:
+    delta = time.time() - start
+    logger.info("Completed inferencing in {:8.3f}s".format(delta))
+    tmp_file = "/tmp/{}".format(os.path.basename(out_file))
+
+    t = time.time()
+    with open (tmp_file, "w") as f:
         for n in range(rows):
             # print ( "{},{},{}".format(df.iloc[n,0][0],predictions[n][0],df.index[n] ), file=f)
             # print ( "{},{}".format(df.iloc[n,0],predictions[n][0]), file=f)
@@ -95,6 +102,10 @@ def reg_go_infer_csv(csv_input_file, model, descriptor_headers, training_headers
             else:
                 print ( "{},{},{}".format(df.iloc[n,0][0],predictions[n][0],df.index[n] ), file=f)
 
+    shutil.copy(tmp_file, out_file)
+    d2 = time.time() - t
+
+    logger.info("Completed writing out in {:8.3f}s".format(d2))
 
 def reg_go_infer(pkl_file, model, descriptor_headers, training_headers, out_file, log_file_path):
     import time
