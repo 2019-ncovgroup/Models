@@ -51,9 +51,6 @@ if __name__ == "__main__":
     elif args.config == "theta_test":
         from theta_test import config, site_specifics
 
-    elif args.config == "comet":
-        from comet import config, site_specifics
-
     elif args.config == "summit":
         from summit import config, site_specifics
 
