@@ -184,10 +184,12 @@ def reg_go_infer(pkl_file, model, descriptor_headers, training_headers, out_file
     samples=np.empty([rows,cols],dtype='float32')
 
     for i in range(rows):
-        a=df.iloc[i,1]        
-        #print("A[1]= ", df.iloc[i,1], " A[0] = ", df.iloc[i,0])
-        #return
-        samples[i]=a
+        a=df.iloc[i,1]
+        try:
+            samples[i]=a
+        except Exception as e:
+            logger.exception("Broke at row {} with data {}. Fixing with setting to None".format(i, a))
+            samples[i] = None            
 
     samples=np.nan_to_num(samples)
 
