@@ -41,19 +41,22 @@ if __name__ == "__main__":
     print(f"Loading pkl files from {args.smile_dir}")
 
     if args.config == "local":
-        from parsl.configs.htex_local import config
-        from parsl.configs.htex_local import config
-        config.executors[0].label = "Foo"
-        config.executors[0].max_workers = 1
+        from local import config, site_specifics
+        from local import site_specifics
+
     elif args.config == "theta":
-        from theta import config
+        from theta import config, site_specifics
         print("Loading theta config")
+
     elif args.config == "theta_test":
-        from theta_test import config
+        from theta_test import config, site_specifics
+
     elif args.config == "comet":
-        from comet import config
+        from comet import config, site_specifics
+
     elif args.config == "summit":
-        from summit import config
+        from summit import config, site_specifics
+
 
     models_list = []
     with open(args.model_file) as f:
@@ -116,8 +119,8 @@ if __name__ == "__main__":
                 input_file_path = f"{smile_dir}/{input_file}"
                 x = parsl_runner[kind](input_file_path,
                                        model_path,                                    
-                                       '/gpfs/alpine/proj-shared/med110/yadu/Models/ADRP-P1.reg/descriptor_headers.csv',
-                                       '/gpfs/alpine/proj-shared/med110/yadu/Models/ADRP-P1.reg/training_headers.csv',
+                                       site_specifics['descriptor_headers'],
+                                       site_specifics['training_headers'],
                                        out_file,
                                        log_file)
 
