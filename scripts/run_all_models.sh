@@ -1,5 +1,5 @@
 #!/bin/bash
-#set -x
+set -x
 
 debug=$1
 config=$2
@@ -20,15 +20,15 @@ run() {
 	    -o $PWD/$output_prefix/$output_prefix \
 	    -m models_to_run.txt \
 	    -n 10  \
-	    -c $config
+	    -c $config	
     elif [[ "$debug" == "prod" ]]
     then
 	python3 driver.py -s "$data_source" \
 	    -o $PWD/$output_prefix/$output_prefix \
 	    -m models_to_run.txt \
 	    -n 10000  \
-	    -c summit
-	mail -s "[Summit] $modelname on $output_prefix completed with $status" yadudoc1729@gmail.com < /dev/null
+	    -c $config
+	mail -s "[$config] $modelname on $output_prefix completed with $status" yadudoc1729@gmail.com < /dev/null
     fi
     status=$?
     echo "Completed -------------------------- $(date)"
@@ -36,13 +36,14 @@ run() {
     echo -e "\n"
     echo "COMPLETED ##########################################################################################"
 
-    mail -s "[Summit] All inference completed for $output_prefix with exit: $status" yadudoc1729@gmail.com < /dev/null
+    mail -s "[$config] All inference completed for $output_prefix with exit: $status" yadudoc1729@gmail.com < /dev/null
 }
 
 
 #run '/projects/CVD_Research/datasets/Zinc15_descriptors/*' "Z15_Infer"
 #run '/gpfs/alpine/med110/scratch/yadunan/descriptors/SAV/*' "SAV_Infer"
-run '/gpfs/alpine/med110/scratch/yadunan/descriptors/ZIN/ZIN*' "ZIN_Infer"
+#run '/gpfs/alpine/med110/scratch/yadunan/descriptors/ZIN/ZIN*' "ZIN_Infer"
+run '/projects/CVD_Research/datasets/release/descriptors/ENA/*' "ENA_Infer"
 
 
 
