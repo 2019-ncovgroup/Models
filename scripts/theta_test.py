@@ -5,6 +5,12 @@ from parsl.executors import HighThroughputExecutor
 from parsl.addresses import address_by_hostname
 #from parsl.monitoring.monitoring import MonitoringHub
 
+site_specifics = {
+    'training_headers' : '/projects/candle_aesp/yadu/Models/ADRP-P1.reg/training_headers.csv',
+    'descriptor_headers': '/projects/candle_aesp/yadu/Models/ADRP-P1.reg/descriptor_headers.csv',
+}
+print("Loading site_specifics : ", site_specifics)
+
 launch_cmd =  ("bash unpack_and_load.sh tmp candle_inferpy3.7 /projects/candle_aesp/yadu/candle_inferpy3.7.tar.gz /dev/shm ;"
                "source /dev/shm/candle_inferpy3.7/bin/activate ;"
                "cd /projects/candle_aesp/yadu/Models/scripts/; python3 setup.py install ;"
@@ -26,21 +32,21 @@ config = Config(
     executors=[
         HighThroughputExecutor(
             label='theta_local_htex_multinode',
-            max_workers=64, # The target process itself if a Multiprocessing application. We do not
+            max_workers=32, # The target process itself if a Multiprocessing application. We do not
             # need to overload the compute node with parsl workers.
             address="10.236.1.195",
             # address=address_by_hostname(),
             launch_cmd=launch_cmd,
             prefetch_capacity=2,
             provider=CobaltProvider(
-                queue='debug-flat-quad',
+                #queue='debug-flat-quad',
                 #queue='default',
-                #queue='CVD_Research',
+                queue='CVD_Research',
                 #account='candle_aesp',
                 account='CVD_Research',
                 launcher=AprunLauncher(overrides=" -d 64"),
-                walltime='01:00:00',
-                nodes_per_block=8,
+                walltime='04:00:00',
+                nodes_per_block=80,
                 init_blocks=1,
                 min_blocks=1,
                 max_blocks=1,
