@@ -54,6 +54,9 @@ if __name__ == "__main__":
     elif args.config == "summit":
         from summit import config, site_specifics
 
+    elif args.config == "summit_killable":
+        from summit_killable import config, site_specifics
+
 
     models_list = []
     with open(args.model_file) as f:
@@ -77,11 +80,12 @@ if __name__ == "__main__":
     all_smile_dirs = glob.glob(args.smile_dir)
     counter = 0
 
+    batch_futures = []
 
     for model_path in models_list:
         model_prefix=os.path.basename(os.path.dirname(model_path))
         print("Model prefix = ", model_prefix)
-        batch_futures = []
+
 
         for smile_dir in all_smile_dirs:
             print("Processing smile_dir: {} {}/{}".format(smile_dir, counter, len(all_smile_dirs)))
@@ -126,14 +130,14 @@ if __name__ == "__main__":
             # Waiting for all futures
             print("Waiting for all futures from {}".format(smile_dir))
 
-        for i in batch_futures:
-            try:
-                x = i.result()
+    for i in batch_futures:
+        try:
+            x = i.result()
 
-            except Exception as e:
-                print("Exception : {} Traceback : {}".format(e, traceback.format_exc()))
-                print(f"Chunk {i} failed")
-        print(f"Completed {model_prefix} against full dataset")    
+        except Exception as e:
+            print("Exception : {} Traceback : {}".format(e, traceback.format_exc()))
+            print(f"Chunk {i} failed")
+    print(f"Completed {model_prefix} against full dataset")    
 
     print("All done!")
 
