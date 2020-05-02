@@ -107,7 +107,7 @@ def reg_go_infer_csv(csv_input_file, model, descriptor_headers, training_headers
 
     logger.info("Completed writing out in {:8.3f}s".format(d2))
 
-def reg_go_infer(pkl_file, model, descriptor_headers, training_headers, out_file, log_file_path):
+def reg_go_infer(pkl_files, model, descriptor_headers, training_headers, out_files, log_file_path):
     import time
     start = time.time()
     import pickle
@@ -122,91 +122,8 @@ def reg_go_infer(pkl_file, model, descriptor_headers, training_headers, out_file
     from keras.optimizers import SGD
     from sklearn.model_selection import train_test_split
     import tensorflow as tf
-    loadtime = time.time() - start
-
-    logger = set_file_logger(log_file_path)
-    logger.info("Start================================================== on {}".format(os.uname()))
-    """
-    psr = argparse.ArgumentParser(description='inferencing on descriptors')
-    psr.add_argument('--in',  default='in_file.pkl')
-    psr.add_argument('--model',  default='model.h5')
-    psr.add_argument('--dh',  default='descriptor_headers.csv')
-    psr.add_argument('--th',  default='training_headers.csv')
-    psr.add_argument('--out', default='out_file.csv')
-    args=vars(psr.parse_args())
-
-    print(args)
-    """
-
-    # get descriptor and training headers
-    # the model was trained on 1613 features
-    # the new descriptor files have 1826 features
-    logger.info(f"Pkl file : {pkl_file}")
-    logger.info(f"model : {model}")
-    logger.info(f"descriptor_headers : {descriptor_headers}")
-    logger.info(f"training_headers : {training_headers}")
-    logger.info(f"out_file : {out_file}")
-    logger.info(f"Python libs loading time : {loadtime}")
-
-    with open (descriptor_headers) as f:
-        reader = csv.reader(f, delimiter=",")
-        drow = next(reader)
-        drow = [x.strip() for x in drow]
-
-    tdict={}
-    for i in range(len(drow)):
-        tdict[drow[i]]=i
-
-
-    f.close()
-    del reader
-
-    with open (training_headers) as f:
-        reader = csv.reader(f, delimiter=",")
-        trow = next(reader)
-        trow = [x.strip() for x in trow]
-
-    f.close()
-    del reader
-
-
-    # read the pickle descriptor file
-    pf=open(pkl_file, 'rb')
-    data=pickle.load(pf)
-    df=pd.DataFrame(data).transpose()
-    df.dropna(how='any', inplace=True)
-    pf.close()
-
-    # build np array from pkl file
-
-    cols=len(df.iloc[0][1])
-    rows=df.shape[0]
-    samples=np.empty([rows,cols],dtype='float32')
-
-    for i in range(rows):
-        a=df.iloc[i,1]
-        try:
-            samples[i]=a
-        except Exception as e:
-            logger.exception("Broke at row {} with data {}. Fixing with setting to None".format(i, a))
-            samples[i] = None            
-
-    samples=np.nan_to_num(samples)
-
-    # build np array with reduced feature set
-
-    reduced=np.empty([rows,len(trow)],dtype='float32')
-    i=0
-    for h in trow:
-        reduced[:,i]=samples[:,tdict[h] ]
-        i=i+1
-
-    # del samples
-
     from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
     scaler = StandardScaler()
-    df_x = scaler.fit_transform(reduced)
-
     # a custom metric was used during training
 
     def r2(y_true, y_pred):
@@ -226,29 +143,90 @@ def reg_go_infer(pkl_file, model, descriptor_headers, training_headers, out_file
                             stateful=False,
                             name='sklearnAUC' )
         return score
+    loadtime = time.time() - start
+
+    logger = set_file_logger(log_file_path)
+    logger.info("Start================================================== on {}".format(os.uname()))
+    logger.info(f"Pkl file : {pkl_file}")
+    logger.info(f"model : {model}")
+    logger.info(f"descriptor_headers : {descriptor_headers}")
+    logger.info(f"training_headers : {training_headers}")
+    logger.info(f"out_file : {out_file}")
+    logger.info(f"Python libs loading time : {loadtime}")
 
     logger.info("Loading model")
     dependencies={'r2' : r2, 'tf_auc' : tf_auc, 'auroc' : auroc }
     model = load_model(model, custom_objects=dependencies)
     model.summary()
     model.compile(loss='mean_squared_error',optimizer=SGD(lr=0.0001, momentum=0.9),metrics=['mae',r2])
+    logger.info("Loading model complete")
 
-    logger.info("Predicting")
-    predictions=model.predict(df_x)
-    assert(len(predictions) == rows)
+    # get descriptor and training headers
+    # the model was trained on 1613 features
+    # the new descriptor files have 1826 features
 
-    logger.info("Starting write out")
-    tmp_file = "/tmp/{}".format(os.path.basename(out_file))
-    with open (tmp_file, "w") as f:
-        for n in range(rows):
-            # print ("{},{},{}".format(df.iloc[n,0][0],predictions[n][0],df.index[n] ), file=f)
-            if len(df.iloc[1,0]) == 0:
-                # IDENTIFIER_LIST is empty, use smile                                                                                                                                                                           
-                print ( "{},{},{}".format(df.index[n],predictions[n][0],df.index[n] ), file=f)
-            else:
-                print ( "{},{},{}".format(df.iloc[n,0][0],predictions[n][0],df.index[n] ), file=f)
+    with open (descriptor_headers) as f:
+        reader = csv.reader(f, delimiter=",")
+        drow = next(reader)
+        drow = [x.strip() for x in drow]
 
-    os.system(f'cp {tmp_file} {out_file}')
+    tdict={}
+    for i in range(len(drow)):
+        tdict[drow[i]]=i
+
+    with open (training_headers) as f:
+        reader = csv.reader(f, delimiter=",")
+        trow = next(reader)
+        trow = [x.strip() for x in trow]
+
+
+    for pkl_file, out_file in zip(pkl_files, out_files):
+        # read the pickle descriptor file
+        with open(pkl_file, 'rb') as pf:
+            data=pickle.load(pf)
+            df=pd.DataFrame(data).transpose()
+            df.dropna(how='any', inplace=True)
+
+        # build np array from pkl file
+        cols=len(df.iloc[0][1])
+        rows=df.shape[0]
+        samples=np.empty([rows,cols],dtype='float32')
+
+        for i in range(rows):
+            a=df.iloc[i,1]
+            try:
+                samples[i]=a
+            except Exception as e:
+                logger.exception("Broke at row {} with data {}. Fixing with setting to None".format(i, a))
+                samples[i] = None
+
+        samples=np.nan_to_num(samples)
+        # build np array with reduced feature set
+
+        reduced=np.empty([rows,len(trow)],dtype='float32')
+        i=0
+        for h in trow:
+            reduced[:,i]=samples[:,tdict[h] ]
+            i=i+1
+        df_x = scaler.fit_transform(reduced)
+    
+
+        logger.info("Predicting")
+        predictions=model.predict(df_x)
+        assert(len(predictions) == rows)
+
+        logger.info("Starting write out")
+        tmp_file = "/tmp/{}".format(os.path.basename(out_file))
+        with open (tmp_file, "w") as f:
+            for n in range(rows):
+                # print ("{},{},{}".format(df.iloc[n,0][0],predictions[n][0],df.index[n] ), file=f)
+                if len(df.iloc[1,0]) == 0:
+                    # IDENTIFIER_LIST is empty, use smile
+                    print ( "{},{},{}".format(df.index[n],predictions[n][0],df.index[n] ), file=f)
+                else:
+                    print ( "{},{},{}".format(df.iloc[n,0][0],predictions[n][0],df.index[n] ), file=f)
+
+        os.system(f'cp {tmp_file} {out_file}')
 
     logger.info("All done")
     logger.handlers.pop()
@@ -280,16 +258,16 @@ if __name__ == '__main__':
     start = time.time()
     for smile_file in glob.glob(args.smile_glob):
         t_start = time.time()
-        x = os.path.basename(smile_file)        
+        x = os.path.basename(smile_file)
         print(smile_file)
         if x.endswith('.pkl'):
-            out_file = x.replace('.pkl', '.{}.csv'.format(modelname))            
+            out_file = x.replace('.pkl', '.{}.csv'.format(modelname))
             log_file = x.replace('.pkl', '.{}.log'.format(modelname))
-            reg_go_infer(smile_file,
+            reg_go_infer([smile_file],
                          args.model,
                          '/gpfs/alpine/proj-shared/med110/yadu/Models/ADRP-P1.reg/descriptor_headers.csv',
                          '/gpfs/alpine/proj-shared/med110/yadu/Models/ADRP-P1.reg/training_headers.csv',
-                         "{}/{}".format(args.outdir, out_file),
+                         ["{}/{}".format(args.outdir, out_file)],
                          "{}/{}".format(args.outdir, log_file))
 
         elif x.endswith('.csv'):
@@ -310,6 +288,5 @@ if __name__ == '__main__':
     delta = time.time() - start
     chunk_count = len(glob.glob(args.smile_glob))
     print("{} Smile_file completed in {:8.3f} s with throughput of {:8.3f} Smiles/s".format(chunk_count,
-                                                                                            delta, 
+                                                                                            delta,
                                                                                             (chunk_count*10000)/delta))
-
